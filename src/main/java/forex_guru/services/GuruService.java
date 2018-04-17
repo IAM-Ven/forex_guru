@@ -10,8 +10,7 @@ public class GuruService {
     @Autowired
     OandaService oandaService;
 
-
     public OandaResponse getPrices() {
-        return oandaService.getPrices("EUR_USD");
+        return oandaService.getPrices("EUR_USD","GBP_USD");
     }
 }
