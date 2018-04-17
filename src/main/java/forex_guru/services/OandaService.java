@@ -62,7 +62,6 @@ public class OandaService {
             logger.info("Response Status: " + Integer.toString(httpResponse.getStatusLine().getStatusCode()));
 
             // read response
-
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(entity.getContent()))) {
                 String line;
 
@@ -74,7 +73,6 @@ public class OandaService {
 
         } catch (IOException ex) {
             logger.error("could not connect to Oanda API");
-
         }
 
         return mapOanda(json);
