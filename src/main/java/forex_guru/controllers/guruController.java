@@ -1,5 +1,6 @@
 package forex_guru.controllers;
 
+import forex_guru.exceptions.OandaException;
 import forex_guru.model.oanda.OandaResponse;
 import forex_guru.services.GuruService;
 import org.slf4j.Logger;
@@ -17,7 +18,7 @@ public class guruController {
     GuruService guruService;
 
     @GetMapping("/prices")
-    public OandaResponse getPrices() {
+    public OandaResponse getPrices() throws OandaException {
         logger.info("API Call: /prices");
         return guruService.getPrices();
     }

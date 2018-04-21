@@ -2,6 +2,7 @@ package forex_guru.services;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import forex_guru.exceptions.OandaException;
 import forex_guru.model.oanda.OandaResponse;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -10,6 +11,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -18,6 +20,8 @@ import java.io.*;
 public class OandaService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+
+    private int throttleCount = 0;
 
     @Value("${oanda.token}")
     private String token;
@@ -30,7 +34,12 @@ public class OandaService {
      * @param instruments per Oanda API docs
      * @return
      */
-    public OandaResponse getPrices(String ... instruments) {
+    public OandaResponse getPrices(String ... instruments) throws OandaException {
+
+        // 120 API calls per second according to API Docs
+        if (throttleCount >= 120) {
+            throw new OandaException("Oanda Throttling Limit Exceeded");
+        }
 
         // create client
         DefaultHttpClient client = new DefaultHttpClient();
@@ -56,8 +65,11 @@ public class OandaService {
 
         try {
             // make api call
+            throttleCount++;
             HttpResponse httpResponse = client.execute(request);
             HttpEntity entity = httpResponse.getEntity();
+
+            logger.info("ThrottleCount: " + throttleCount);
 
             logger.info("Response Status: " + Integer.toString(httpResponse.getStatusLine().getStatusCode()));
 
@@ -72,7 +84,8 @@ public class OandaService {
             }
 
         } catch (IOException ex) {
-            logger.error("could not connect to Oanda API");
+            logger.error("Could not connect to Oanda API");
+            throw new OandaException("Could not connect to Oanda API: " + urlbuilder.toString());
         }
 
         return mapOanda(json);
@@ -93,6 +106,12 @@ public class OandaService {
             logger.error("could not map response");
             return null;
         }
+    }
+
+    @Scheduled(fixedRate = 1000)
+    public void resetThrottleCount() {
+        throttleCount = 0;
+        logger.info("Throttle Reset");
     }
 
 }
