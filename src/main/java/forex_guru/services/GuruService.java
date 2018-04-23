@@ -3,10 +3,8 @@ package forex_guru.services;
 import forex_guru.exceptions.OandaException;
 import forex_guru.model.oanda.OandaResponse;
 import forex_guru.utils.EmailUtil;
-import org.hibernate.validator.constraints.Email;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Service

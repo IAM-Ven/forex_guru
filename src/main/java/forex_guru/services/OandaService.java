@@ -11,6 +11,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +39,7 @@ public class OandaService {
 
         // 120 API calls per second according to API Docs
         if (throttleCount >= 120) {
-            throw new OandaException("Oanda Throttling Limit Exceeded");
+            throw new OandaException("Oanda Throttling Limit Exceeded", HttpStatus.BANDWIDTH_LIMIT_EXCEEDED);
         }
 
         // create client
@@ -85,7 +86,7 @@ public class OandaService {
 
         } catch (IOException ex) {
             logger.error("Could not connect to Oanda API");
-            throw new OandaException("Could not connect to Oanda API: " + urlbuilder.toString());
+            throw new OandaException("Could not connect to Oanda API: " + urlbuilder.toString(), HttpStatus.BAD_REQUEST);
         }
 
         return mapOanda(json);
@@ -108,10 +109,13 @@ public class OandaService {
         }
     }
 
+    /**
+     * Resets the throttlingCount every second
+     */
     @Scheduled(fixedRate = 1000)
     public void resetThrottleCount() {
         throttleCount = 0;
-        logger.info("Throttle Reset");
+        logger.info("Throttle Reset: " + throttleCount);
     }
 
 }
