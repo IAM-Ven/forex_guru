@@ -25,8 +25,13 @@ repositories {
 
 dependencies {
     compile('org.springframework.boot:spring-boot-starter')
-    compile("org.springframework.boot:spring-boot-starter-web")
-    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.4'
-    compile group: 'com.amazonaws', name: 'aws-java-sdk', version: '1.11.312'
+    compile('org.springframework.boot:spring-boot-starter-web')
+    compile('org.springframework.boot:spring-boot-starter-security')
+    compile(group: 'org.springframework.security.oauth', name: 'spring-security-oauth2', version: '2.0.2.RELEASE')
     testCompile('org.springframework.boot:spring-boot-starter-test')
+
+    compile(group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.4')
+    compile(group: 'com.amazonaws', name: 'aws-java-sdk', version: '1.11.312')
+    compile(group: 'org.hibernate', name: 'hibernate-gradle-plugin', version: '5.2.16.Final')
+
 }
