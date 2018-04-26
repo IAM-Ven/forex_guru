@@ -1,8 +1,9 @@
 # Forex Guru
-This is a project for experimenting with Forex, Machine Learning and Spring Security.
+This is a project for experimenting with Forex, Machine Learning, Spring Security and 
+AWS Simple Email Service.
 
 ## Usage
-This API is secured with OAuth2. In order to obtain an application token
+This API is secured with OAuth2. In order to obtain an access token
 you should make a POST request to the Authorization Server.
 
 ```
@@ -14,4 +15,4 @@ You can make a request to any endpoint using the access token in the authorizati
 
 ```
 curl -X GET -H "Authorization: Bearer {access_token}" http://localhost:8080/prices
-``
+```
