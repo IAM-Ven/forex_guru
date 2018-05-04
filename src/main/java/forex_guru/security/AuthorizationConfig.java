@@ -1,14 +1,23 @@
 package forex_guru.security;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
+import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
+import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
+import org.springframework.security.oauth2.provider.code.JdbcAuthorizationCodeServices;
+import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
+
+import javax.sql.DataSource;
 
 /**
  * Configuration for Authorization Server
@@ -19,24 +28,30 @@ public class AuthorizationConfig extends AuthorizationServerConfigurerAdapter {
 
     private static final int expiration = 3600;
 
+    @Autowired
+    DataSource dataSource;
+
     /**
      * Configure client credentials
      */
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
-        clients.inMemory()
+
+        // gets client credentials from DB
+        clients.jdbc(dataSource);
 
                 // demo client credentials
-                .withClient("guru").secret(passwordEncoder().encode("secret"))
+//                .withClient("guru").secret(passwordEncoder().encode("secret"))
+//
+//                // scope of authorization
+//                .scopes("read", "write")
+//
+//                // only allows authentication with client credentials
+//                .authorizedGrantTypes("client_credentials")
+//
+//                // create table
+//                .and().build();
 
-                // access token expiration time
-                .accessTokenValiditySeconds(expiration)
-
-                // scope of authorization
-                .scopes("read","write")
-
-                // allows authentication with client credentials and refresh token
-                .authorizedGrantTypes("client_credentials");
     }
 
     /**
@@ -54,5 +69,4 @@ public class AuthorizationConfig extends AuthorizationServerConfigurerAdapter {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
 }
