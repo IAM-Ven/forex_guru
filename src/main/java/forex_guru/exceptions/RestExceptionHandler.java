@@ -14,4 +14,10 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     RootResponse oandaError(OandaException ex) {
         return new RootResponse(ex.getStatus(), ex.getMessage(), null);
     }
+
+    @ExceptionHandler(value=ClientException.class)
+    protected @ResponseBody
+    RootResponse clientError(ClientException ex) {
+        return new RootResponse(ex.getStatus(), ex.getMessage(), null);
+    }
 }

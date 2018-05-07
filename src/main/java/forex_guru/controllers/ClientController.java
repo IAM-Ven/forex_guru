@@ -1,5 +1,6 @@
 package forex_guru.controllers;
 
+import forex_guru.exceptions.ClientException;
 import forex_guru.mappers.ClientMapper;
 import forex_guru.model.internal.RootResponse;
 import forex_guru.model.security.OAuth2Client;
@@ -21,14 +22,19 @@ public class ClientController {
      * Creates a new client with the given client details
      */
     @PostMapping("/client")
-    public RootResponse createClient(@RequestBody OAuth2Client client) {
+    public RootResponse createClient(@RequestBody OAuth2Client client) throws ClientException {
 
         // encode password
         String password = passwordEncoder.encode(client.getClient_secret());
         client.setClient_secret(password);
 
         // store client in DB
-        clientMapper.insertClient(client);
+        try {
+            clientMapper.insertClient(client);
+        } catch (Exception ex) {
+            throw new ClientException("could not create client", HttpStatus.BAD_REQUEST);
+
+        }
 
         return new RootResponse(HttpStatus.OK, "client created successfully", client);
     }
@@ -37,10 +43,14 @@ public class ClientController {
      * Retrieves client details for the given client
      */
     @GetMapping("/client")
-    public RootResponse retrieveClient(@RequestParam(value="client_id") String client_id) {
+    public RootResponse retrieveClient(@RequestParam(value="client_id") String client_id) throws ClientException {
 
         // retrieve client from DB
         OAuth2Client client =  clientMapper.findClient(client_id);
+
+        if (client == null) {
+            throw new ClientException("could not retrieve client", HttpStatus.BAD_REQUEST);
+        }
 
         return new RootResponse(HttpStatus.OK, "client retrieved successfully", client);
     }
@@ -49,14 +59,16 @@ public class ClientController {
      * Updates client details for the given client
      */
     @PutMapping("/client")
-    public RootResponse updateClient(@RequestBody OAuth2Client client) {
+    public RootResponse updateClient(@RequestBody OAuth2Client client) throws ClientException {
 
         // encode password
         String password = passwordEncoder.encode(client.getClient_secret());
         client.setClient_secret(password);
 
         // store client in DB
-        clientMapper.updateClient(client);
+        if (!clientMapper.updateClient(client)) {
+            throw new ClientException("could not update client", HttpStatus.BAD_REQUEST);
+        }
 
         return new RootResponse(HttpStatus.OK, "client updated successfully", client);
     }
@@ -65,10 +77,12 @@ public class ClientController {
      * Deletes the given client
      */
     @DeleteMapping("/client")
-    public RootResponse deleteClient(@RequestParam(value="client_id") String client_id) {
+    public RootResponse deleteClient(@RequestParam(value="client_id") String client_id) throws ClientException {
 
         // delete client from DB
-        clientMapper.deleteClient(client_id);
+        if (!clientMapper.deleteClient(client_id)) {
+            throw new ClientException("could not delete client", HttpStatus.BAD_REQUEST);
+        }
 
         return new RootResponse(HttpStatus.OK, "client deleted successfully", client_id);
     }

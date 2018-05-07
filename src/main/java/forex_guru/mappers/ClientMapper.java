@@ -9,7 +9,7 @@ public interface ClientMapper {
     @Insert("INSERT INTO `ForexGuru`.`oauth_client_details` " +
             "(`client_id`, `client_secret`, `scope`, `authorized_grant_types`) " +
             "VALUES (#{client_id}, #{client_secret}, #{scope}, #{authorized_grant_types}); ")
-    public int insertClient(OAuth2Client client);
+    public boolean insertClient(OAuth2Client client);
 
 
     @Select("SELECT * FROM `ForexGuru`.`oauth_client_details` WHERE `client_id` = #{client_id} ")

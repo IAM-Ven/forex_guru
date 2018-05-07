@@ -9,7 +9,7 @@ credentials for an access token.
 You can register client credentials by making a POST request to the Authorization Server with the
 client_id and client_secret of your choosing.
 ```
-curl -X POST -H 'Content-Type: application/json' -d '{"client_id": "client", "client_secret": "test", "scope": "read,write", "authorized_grant_types":"client_credentials"}' http://localhost:8080/client
+curl -X POST -H 'Content-Type: application/json' -d '{"client_id": "guru", "client_secret": "secret", "scope": "read,write", "authorized_grant_types":"client_credentials"}' http://localhost:8080/client
 ```
 
 In order to obtain an access token you should make a POST request to the Authorization Server with your client credentials.
