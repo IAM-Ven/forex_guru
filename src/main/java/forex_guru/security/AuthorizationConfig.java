@@ -37,8 +37,12 @@ public class AuthorizationConfig extends AuthorizationServerConfigurerAdapter {
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
 
-        // gets client credentials from DB
-        clients.jdbc(dataSource);
+        clients
+                // gets client credentials from DB
+                .jdbc(dataSource)
+
+                // encode with BCrypt
+                .passwordEncoder(passwordEncoder());
 
                 // demo client credentials
 //                .withClient("guru").secret(passwordEncoder().encode("secret"))
@@ -52,14 +56,6 @@ public class AuthorizationConfig extends AuthorizationServerConfigurerAdapter {
 //                // create table
 //                .and().build();
 
-    }
-
-    /**
-     * Set password encoder for client secrets to bCrypt
-     */
-    @Override
-    public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
-        security.passwordEncoder(passwordEncoder());
     }
 
     /**
