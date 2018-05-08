@@ -3,9 +3,9 @@ package forex_guru.model.kibot;
 public class KibotRate {
 
     private String date;
-    private String timestamp;
+    private long timestamp;
     private String symbol;
-    private float close;
+    private double close;
 
     public String getDate() {
         return date;
@@ -15,11 +15,11 @@ public class KibotRate {
         this.date = date;
     }
 
-    public String getTimestamp() {
+    public long getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(String timestamp) {
+    public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }
 
@@ -31,11 +31,11 @@ public class KibotRate {
         this.symbol = symbol;
     }
 
-    public float getClose() {
+    public double getClose() {
         return close;
     }
 
-    public void setClose(float close) {
+    public void setClose(double close) {
         this.close = close;
     }
 }

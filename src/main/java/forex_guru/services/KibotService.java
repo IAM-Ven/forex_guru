@@ -1,6 +1,7 @@
 package forex_guru.services;
 
 import forex_guru.exceptions.OandaException;
+import forex_guru.mappers.RateMapper;
 import forex_guru.model.internal.RootResponse;
 import forex_guru.model.kibot.KibotRate;
 import org.slf4j.Logger;
@@ -14,7 +15,10 @@ import org.springframework.web.client.RestTemplate;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 @Service
 public class KibotService {
@@ -23,6 +27,9 @@ public class KibotService {
 
     @Autowired
     RestTemplate restTemplate;
+
+    @Autowired
+    RateMapper rateMapper;
 
     public RootResponse getRates() {
 
@@ -55,6 +62,9 @@ public class KibotService {
         ArrayList<KibotRate> kibotRates = mapRates(response, symbol);
 
         // persist data to DB
+        for (KibotRate rate : kibotRates) {
+            rateMapper.insertRate(rate);
+        }
 
 
         return new RootResponse(HttpStatus.OK, "OK", mapRates(response, symbol));
@@ -73,12 +83,26 @@ public class KibotService {
 
                 String[] data = line.split(",");
 
+                // parse timestamp
+
+                long epoch = 0;
+
+                try {
+                    SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");
+                    Date date = df.parse(data[0]);
+                    epoch = date.getTime();
+                } catch (ParseException ex) {
+                    logger.error("could not parse date");
+                    // throw exception
+                }
+
+
                 // create new KibotRate Object
                 KibotRate rate = new KibotRate();
                 rate.setDate(data[0]);
-                rate.setTimestamp("");
+                rate.setTimestamp(epoch);
                 rate.setSymbol(symbol);
-                rate.setClose(Float.parseFloat(data[4]));
+                rate.setClose(Double.parseDouble(data[4]));
 
                 // add to results
                 output.add(rate);
