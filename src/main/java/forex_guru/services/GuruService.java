@@ -1,31 +1,40 @@
 package forex_guru.services;
 
-import forex_guru.exceptions.OandaException;
-import forex_guru.model.oanda.OandaResponse;
-import forex_guru.utils.EmailUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 public class GuruService {
 
-    @Autowired
-    private OandaService oandaService;
+//    @Autowired
+//    private OandaService oandaService;
 
     @Value("${aws.email}")
     private String email;
 
-    public OandaResponse getPrices() throws OandaException {
-        OandaResponse response = oandaService.getPrices("EUR_USD","GBP_USD","EUR_CAD","EUR_GBP");
 
-        String textBody = "Could not display html";
+    public double getPricePrediction(String symbol) {
 
-        String htmlBody = EmailUtil.formatCurrencyNotificationEmail(response.getPrices());
+        // check if less than 250 DB records (to exclude
 
-        //EmailUtil.sendEmail(email, email, "Market Update!", textBody, htmlBody);
+            // getPrices()
 
-        return response;
+
+        return 0.0;
     }
+
+
+
+//    public OandaResponse getPrices() throws KibotException {
+//        OandaResponse response = oandaService.getPrices("EUR_USD","GBP_USD","EUR_CAD","EUR_GBP");
+//
+//        String textBody = "Could not display html";
+//
+//        String htmlBody = EmailUtil.formatCurrencyNotificationEmail(response.getPrices());
+//
+//        //EmailUtil.sendEmail(email, email, "Market Update!", textBody, htmlBody);
+//
+//        return response;
+//    }
 
 }

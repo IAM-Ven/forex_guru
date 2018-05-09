@@ -9,9 +9,15 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @ControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler(value=OandaException.class)
+    @ExceptionHandler(value=KibotException.class)
     protected @ResponseBody
-    RootResponse oandaError(OandaException ex) {
+    RootResponse oandaError(KibotException ex) {
+        return new RootResponse(ex.getStatus(), ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(value=DatabaseException.class)
+    protected @ResponseBody
+    RootResponse databaseError(KibotException ex) {
         return new RootResponse(ex.getStatus(), ex.getMessage(), null);
     }
 

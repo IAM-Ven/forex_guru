@@ -26,8 +26,6 @@ import javax.sql.DataSource;
 @EnableAuthorizationServer
 public class AuthorizationConfig extends AuthorizationServerConfigurerAdapter {
 
-    private static final int expiration = 3600;
-
     @Autowired
     DataSource dataSource;
 
@@ -43,19 +41,14 @@ public class AuthorizationConfig extends AuthorizationServerConfigurerAdapter {
 
                 // encode with BCrypt
                 .passwordEncoder(passwordEncoder());
+    }
 
-                // demo client credentials
-//                .withClient("guru").secret(passwordEncoder().encode("secret"))
-//
-//                // scope of authorization
-//                .scopes("read", "write")
-//
-//                // only allows authentication with client credentials
-//                .authorizedGrantTypes("client_credentials")
-//
-//                // create table
-//                .and().build();
-
+    /**
+     * Set password encoder for client secrets to bCrypt
+     */
+    @Override
+    public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
+        security.passwordEncoder(passwordEncoder());
     }
 
     /**

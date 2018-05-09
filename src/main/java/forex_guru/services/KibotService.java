@@ -1,6 +1,7 @@
 package forex_guru.services;
 
-import forex_guru.exceptions.OandaException;
+import forex_guru.exceptions.DatabaseException;
+import forex_guru.exceptions.KibotException;
 import forex_guru.mappers.RateMapper;
 import forex_guru.model.internal.RootResponse;
 import forex_guru.model.kibot.KibotRate;
@@ -31,17 +32,30 @@ public class KibotService {
     @Autowired
     RateMapper rateMapper;
 
-    public RootResponse getRates() {
+    /**
+     * Pulls exchange rates for the given symbol
+     * If no dates are given, the daily rates for the last year are retrieved
+     * @param symbol String
+     * @param dates String startdate, String enddate (format: MM/DD/YYYY)
+     * @return JSON Currency Exchange Rate Data
+     */
+    public RootResponse getRates(String symbol, String ... dates) throws KibotException, DatabaseException {
 
         // default parameters
-        String symbol = "USDEUR";
-        int period = 5;
+        int period = 365;
 
         // build query
         StringBuilder queryBuilder = new StringBuilder("http://api.kibot.com/?action=history");
         queryBuilder.append("&symbol=" + symbol);
         queryBuilder.append("&interval=daily");
-        queryBuilder.append("&period=" + period);
+
+        if (dates.length == 2) {
+            queryBuilder.append("&startdate=" + dates[0]);
+            queryBuilder.append("&enddate=" + dates[1]);
+        } else {
+            queryBuilder.append("&period=" + period);
+        }
+
         queryBuilder.append("&type=forex");
         String query =  queryBuilder.toString();
 
@@ -55,22 +69,41 @@ public class KibotService {
         // catch bad API call
         catch (HttpClientErrorException ex) {
             logger.error("bad kibot api request");
-            // throw exception
+            throw new KibotException(HttpStatus.BAD_REQUEST, "bad kibot api request");
         }
 
         // map response to KibotRate Objects
         ArrayList<KibotRate> kibotRates = mapRates(response, symbol);
 
         // persist data to DB
-        for (KibotRate rate : kibotRates) {
-            rateMapper.insertRate(rate);
-        }
-
+        persistRates(kibotRates);
 
         return new RootResponse(HttpStatus.OK, "OK", mapRates(response, symbol));
     }
 
-    private ArrayList<KibotRate> mapRates(String rates, String symbol) {
+    /**
+     * Aggregates data to fill in gap between last DB record and current available data
+     * @param symbol to aggregate
+     */
+    public void aggregateGap(String symbol) {
+
+        // retrieve last DB timestamp
+
+        // retrieve current timestamp
+
+        // convert timestamps to dates
+
+        // get rates
+
+    }
+
+    /**
+     * Maps String response data to KibotRate Objects
+     * @param rates to map
+     * @param symbol of rates
+     * @return an ArrayList of KibotRate Objects with the given data
+     */
+    private ArrayList<KibotRate> mapRates(String rates, String symbol) throws KibotException {
 
         ArrayList<KibotRate> output = new ArrayList<>();
 
@@ -93,9 +126,8 @@ public class KibotService {
                     epoch = date.getTime();
                 } catch (ParseException ex) {
                     logger.error("could not parse date");
-                    // throw exception
+                    throw new KibotException(HttpStatus.BAD_REQUEST, "could not parse kibot date");
                 }
-
 
                 // create new KibotRate Object
                 KibotRate rate = new KibotRate();
@@ -110,10 +142,32 @@ public class KibotService {
 
         } catch (IOException ex) {
             logger.error("could not map response");
-            // throw exception);
+            throw new KibotException(HttpStatus.BAD_REQUEST, "could not map kibot response");
         }
 
         return output;
+    }
+
+    // TODO: background task
+    /**
+     * Persists KibotRates to DB
+     * @param rates to persist
+     */
+    private void persistRates(ArrayList<KibotRate> rates) throws DatabaseException {
+        // iterate through rates
+        for (KibotRate rate : rates) {
+            try {
+                // check if already in DB
+                if (rateMapper.findRateBySymbolAndTimestamp(rate.getSymbol(), rate.getTimestamp()) == null) {
+                    // persist to DB
+                    logger.info("persisted to database: " + rate.getSymbol() + " " + rate.getTimestamp());
+                    rateMapper.insertRate(rate);
+                }
+            } catch (Exception ex) {
+                logger.error("could not persist to database: " + rate.getSymbol() + " " + rate.getTimestamp());
+                throw new DatabaseException(HttpStatus.BAD_REQUEST, "could not persist to database");
+            }
+        }
     }
 
 }

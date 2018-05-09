@@ -10,6 +10,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+/**
+ * OAuth2 Client CRUD
+ */
 public class ClientController {
 
     @Autowired
