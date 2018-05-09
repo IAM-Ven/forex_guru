@@ -33,30 +33,57 @@ public class KibotService {
     RateMapper rateMapper;
 
     /**
-     * Pulls exchange rates for the given symbol
-     * If no dates are given, the daily rates for the last year are retrieved
-     * @param symbol String
-     * @param dates String startdate, String enddate (format: MM/DD/YYYY)
+     * Aggregates data from 01/01/2015 to yesterday
+     * @param symbol to aggregate
+     */
+    public ArrayList<KibotRate> aggregate(String symbol) throws KibotException, DatabaseException {
+
+        // retrieve start timestamp in epoch time
+        long startdate;
+        // if no data in DB, start with 01/01/2015
+        if (rateMapper.findRateBySymbol(symbol).size() == 0) {
+            startdate = 1420070400;
+        }
+        // start from last entry
+        else {
+            startdate = rateMapper.findLatestTimestampBySymbol(symbol);
+        }
+
+        // end timestamp: today - 1 day (864000) in epoch time
+        long enddate = (System.currentTimeMillis() / 1000) - 86400;
+
+        // get rates
+        return getRates(symbol, startdate, enddate);
+    }
+
+    /**
+     * Pulls daily exchange rates for the given symbol and date range
+     * @param symbol of forex (ex USDEUR)
+     * @param startdate epoch time
+     * @param enddate epoch time
      * @return JSON Currency Exchange Rate Data
      */
-    public RootResponse getRates(String symbol, String ... dates) throws KibotException, DatabaseException {
+    private ArrayList<KibotRate> getRates(String symbol, long startdate, long enddate) throws KibotException, DatabaseException {
 
-        // default parameters
-        int period = 365;
+        // if the start and end are the same day, no data necessary
+        if (enddate - startdate <= 86400) {
+            throw new KibotException(HttpStatus.OK, "data aggregation is current");
+        }
+
+        // convert dates to Kibot formatting (MM/DD/YYYY)
+        SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");
+        String start = df.format(new Date(startdate * 1000)).toString();
+        String end = df.format(new Date(enddate * 1000)).toString();
 
         // build query
         StringBuilder queryBuilder = new StringBuilder("http://api.kibot.com/?action=history");
+        queryBuilder.append("&user=guest");
+        queryBuilder.append("&password=guest");
+        queryBuilder.append("&type=forex");
         queryBuilder.append("&symbol=" + symbol);
         queryBuilder.append("&interval=daily");
-
-        if (dates.length == 2) {
-            queryBuilder.append("&startdate=" + dates[0]);
-            queryBuilder.append("&enddate=" + dates[1]);
-        } else {
-            queryBuilder.append("&period=" + period);
-        }
-
-        queryBuilder.append("&type=forex");
+        queryBuilder.append("&startdate=" + start);
+        queryBuilder.append("&enddate=" + end);
         String query =  queryBuilder.toString();
 
         // make API call
@@ -78,23 +105,7 @@ public class KibotService {
         // persist data to DB
         persistRates(kibotRates);
 
-        return new RootResponse(HttpStatus.OK, "OK", mapRates(response, symbol));
-    }
-
-    /**
-     * Aggregates data to fill in gap between last DB record and current available data
-     * @param symbol to aggregate
-     */
-    public void aggregateGap(String symbol) {
-
-        // retrieve last DB timestamp
-
-        // retrieve current timestamp
-
-        // convert timestamps to dates
-
-        // get rates
-
+        return kibotRates;
     }
 
     /**
@@ -118,12 +129,12 @@ public class KibotService {
 
                 // parse timestamp
 
-                long epoch = 0;
+                long epoch;
 
                 try {
                     SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");
                     Date date = df.parse(data[0]);
-                    epoch = date.getTime();
+                    epoch = date.getTime() / 1000;
                 } catch (ParseException ex) {
                     logger.error("could not parse date");
                     throw new KibotException(HttpStatus.BAD_REQUEST, "could not parse kibot date");
@@ -148,7 +159,6 @@ public class KibotService {
         return output;
     }
 
-    // TODO: background task
     /**
      * Persists KibotRates to DB
      * @param rates to persist
