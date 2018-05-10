@@ -1,6 +1,6 @@
-package forex_guru.model.kibot;
+package forex_guru.model.external;
 
-public class KibotRate {
+public class ExchangeRate {
 
     private String date;
     private long timestamp;

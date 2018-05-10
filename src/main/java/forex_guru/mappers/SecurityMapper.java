@@ -4,7 +4,7 @@ import forex_guru.model.security.OAuth2Client;
 import org.apache.ibatis.annotations.*;
 
 @Mapper
-public interface ClientMapper {
+public interface SecurityMapper {
 
     @Insert("INSERT INTO `ForexGuru`.`oauth_client_details` " +
             "(`client_id`, `client_secret`, `scope`, `authorized_grant_types`) " +

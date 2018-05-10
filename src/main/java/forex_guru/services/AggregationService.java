@@ -2,9 +2,8 @@ package forex_guru.services;
 
 import forex_guru.exceptions.DatabaseException;
 import forex_guru.exceptions.KibotException;
-import forex_guru.mappers.RateMapper;
-import forex_guru.model.internal.RootResponse;
-import forex_guru.model.kibot.KibotRate;
+import forex_guru.mappers.DataMapper;
+import forex_guru.model.external.ExchangeRate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 @Service
-public class KibotService {
+public class AggregationService {
 
     Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -30,23 +29,23 @@ public class KibotService {
     RestTemplate restTemplate;
 
     @Autowired
-    RateMapper rateMapper;
+    DataMapper dataMapper;
 
     /**
      * Aggregates data from 01/01/2015 to yesterday
      * @param symbol to aggregate
      */
-    public ArrayList<KibotRate> aggregate(String symbol) throws KibotException, DatabaseException {
+    public ArrayList<ExchangeRate> aggregate(String symbol) throws KibotException, DatabaseException {
 
         // retrieve start timestamp in epoch time
         long startdate;
         // if no data in DB, start with 01/01/2015
-        if (rateMapper.findRateBySymbol(symbol).size() == 0) {
+        if (dataMapper.findRateBySymbol(symbol).size() == 0) {
             startdate = 1420070400;
         }
         // start from last entry
         else {
-            startdate = rateMapper.findLatestTimestampBySymbol(symbol);
+            startdate = dataMapper.findLatestTimestampBySymbol(symbol);
         }
 
         // end timestamp: today - 1 day (864000) in epoch time
@@ -63,7 +62,7 @@ public class KibotService {
      * @param enddate epoch time
      * @return JSON Currency Exchange Rate Data
      */
-    private ArrayList<KibotRate> getRates(String symbol, long startdate, long enddate) throws KibotException, DatabaseException {
+    private ArrayList<ExchangeRate> getRates(String symbol, long startdate, long enddate) throws KibotException, DatabaseException {
 
         // if the start and end are the same day, no data necessary
         if (enddate - startdate <= 86400) {
@@ -95,28 +94,28 @@ public class KibotService {
         }
         // catch bad API call
         catch (HttpClientErrorException ex) {
-            logger.error("bad kibot api request");
-            throw new KibotException(HttpStatus.BAD_REQUEST, "bad kibot api request");
+            logger.error("bad external api request");
+            throw new KibotException(HttpStatus.BAD_REQUEST, "bad external api request");
         }
 
-        // map response to KibotRate Objects
-        ArrayList<KibotRate> kibotRates = mapRates(response, symbol);
+        // map response to ExchangeRate Objects
+        ArrayList<ExchangeRate> exchangeRates = mapRates(response, symbol);
 
         // persist data to DB
-        persistRates(kibotRates);
+        persistRates(exchangeRates);
 
-        return kibotRates;
+        return exchangeRates;
     }
 
     /**
-     * Maps String response data to KibotRate Objects
+     * Maps String response data to ExchangeRate Objects
      * @param rates to map
      * @param symbol of rates
-     * @return an ArrayList of KibotRate Objects with the given data
+     * @return an ArrayList of ExchangeRate Objects with the given data
      */
-    private ArrayList<KibotRate> mapRates(String rates, String symbol) throws KibotException {
+    private ArrayList<ExchangeRate> mapRates(String rates, String symbol) throws KibotException {
 
-        ArrayList<KibotRate> output = new ArrayList<>();
+        ArrayList<ExchangeRate> output = new ArrayList<>();
 
         // read response
         try (BufferedReader reader = new BufferedReader(new StringReader(rates))) {
@@ -137,11 +136,11 @@ public class KibotService {
                     epoch = date.getTime() / 1000;
                 } catch (ParseException ex) {
                     logger.error("could not parse date");
-                    throw new KibotException(HttpStatus.BAD_REQUEST, "could not parse kibot date");
+                    throw new KibotException(HttpStatus.BAD_REQUEST, "could not parse external date");
                 }
 
-                // create new KibotRate Object
-                KibotRate rate = new KibotRate();
+                // create new ExchangeRate Object
+                ExchangeRate rate = new ExchangeRate();
                 rate.setDate(data[0]);
                 rate.setTimestamp(epoch);
                 rate.setSymbol(symbol);
@@ -153,7 +152,7 @@ public class KibotService {
 
         } catch (IOException ex) {
             logger.error("could not map response");
-            throw new KibotException(HttpStatus.BAD_REQUEST, "could not map kibot response");
+            throw new KibotException(HttpStatus.BAD_REQUEST, "could not map external response");
         }
 
         return output;
@@ -163,15 +162,15 @@ public class KibotService {
      * Persists KibotRates to DB
      * @param rates to persist
      */
-    private void persistRates(ArrayList<KibotRate> rates) throws DatabaseException {
+    private void persistRates(ArrayList<ExchangeRate> rates) throws DatabaseException {
         // iterate through rates
-        for (KibotRate rate : rates) {
+        for (ExchangeRate rate : rates) {
             try {
                 // check if already in DB
-                if (rateMapper.findRateBySymbolAndTimestamp(rate.getSymbol(), rate.getTimestamp()) == null) {
+                if (dataMapper.findRateBySymbolAndTimestamp(rate.getSymbol(), rate.getTimestamp()) == null) {
                     // persist to DB
                     logger.info("persisted to database: " + rate.getSymbol() + " " + rate.getTimestamp());
-                    rateMapper.insertRate(rate);
+                    dataMapper.insertRate(rate);
                 }
             } catch (Exception ex) {
                 logger.error("could not persist to database: " + rate.getSymbol() + " " + rate.getTimestamp());

@@ -1,7 +1,7 @@
 package forex_guru.controllers;
 
 import forex_guru.exceptions.ClientException;
-import forex_guru.mappers.ClientMapper;
+import forex_guru.mappers.SecurityMapper;
 import forex_guru.model.internal.RootResponse;
 import forex_guru.model.security.OAuth2Client;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,14 +9,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-@RestController
 /**
- * OAuth2 Client CRUD
+ * OAuth2 Client CRUD Endpoints
  */
-public class ClientController {
+@RestController
+public class SecurityController {
 
     @Autowired
-    ClientMapper clientMapper;
+    SecurityMapper securityMapper;
 
     @Autowired
     PasswordEncoder passwordEncoder;
@@ -24,7 +24,7 @@ public class ClientController {
     /**
      * Creates a new client with the given client details
      */
-    @PostMapping("/client")
+    @PostMapping("/oauth/client")
     public RootResponse createClient(@RequestBody OAuth2Client client) throws ClientException {
 
         // encode password
@@ -33,7 +33,7 @@ public class ClientController {
 
         // store client in DB
         try {
-            clientMapper.insertClient(client);
+            securityMapper.insertClient(client);
         } catch (Exception ex) {
             throw new ClientException("could not create client", HttpStatus.BAD_REQUEST);
 
@@ -45,11 +45,11 @@ public class ClientController {
     /**
      * Retrieves client details for the given client
      */
-    @GetMapping("/client")
+    @GetMapping("/oauth/client")
     public RootResponse retrieveClient(@RequestParam(value="client_id") String client_id) throws ClientException {
 
         // retrieve client from DB
-        OAuth2Client client =  clientMapper.findClient(client_id);
+        OAuth2Client client =  securityMapper.findClient(client_id);
 
         if (client == null) {
             throw new ClientException("could not retrieve client", HttpStatus.BAD_REQUEST);
@@ -61,7 +61,7 @@ public class ClientController {
     /**
      * Updates client details for the given client
      */
-    @PutMapping("/client")
+    @PutMapping("/oauth/client")
     public RootResponse updateClient(@RequestBody OAuth2Client client) throws ClientException {
 
         // encode password
@@ -69,7 +69,7 @@ public class ClientController {
         client.setClient_secret(password);
 
         // store client in DB
-        if (!clientMapper.updateClient(client)) {
+        if (!securityMapper.updateClient(client)) {
             throw new ClientException("could not update client", HttpStatus.BAD_REQUEST);
         }
 
@@ -79,11 +79,11 @@ public class ClientController {
     /**
      * Deletes the given client
      */
-    @DeleteMapping("/client")
+    @DeleteMapping("/oauth/client")
     public RootResponse deleteClient(@RequestParam(value="client_id") String client_id) throws ClientException {
 
         // delete client from DB
-        if (!clientMapper.deleteClient(client_id)) {
+        if (!securityMapper.deleteClient(client_id)) {
             throw new ClientException("could not delete client", HttpStatus.BAD_REQUEST);
         }
 
