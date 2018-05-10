@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -32,27 +33,40 @@ public class AggregationService {
     DataMapper dataMapper;
 
     /**
-     * Aggregates data from 01/01/2015 to yesterday
-     * @param symbol to aggregate
+     * Aggregates data from 01/01/2015 to most recent market close, twice daily
+     * The data is stored in the 'rates' DB table
      */
-    public ArrayList<ExchangeRate> aggregate(String symbol) throws KibotException, DatabaseException {
+    @Scheduled(cron="*/5 * * * * *") // TESTING ONLY
+    //@Scheduled(cron="0 0 6,19 * * *")
+    public void aggregate() throws KibotException, DatabaseException {
 
-        // retrieve start timestamp in epoch time
-        long startdate;
-        // if no data in DB, start with 01/01/2015
-        if (dataMapper.findRateBySymbol(symbol).size() == 0) {
-            startdate = 1420070400;
+        // iterate through all symbols being tracked be prediction service
+        for (String symbol : PredictionService.TRACKING) {
+
+            // retrieve start timestamp in epoch time
+            long startdate;
+            // if no data in DB, start with 01/01/2015
+            if (dataMapper.findRateBySymbol(symbol).size() == 0) {
+                startdate = 1420070400;
+            }
+            // start from last entry
+            else {
+                startdate = dataMapper.findLatestTimestampBySymbol(symbol);
+            }
+
+            // end timestamp: today - 1 day (864000) in epoch time
+            long enddate = (System.currentTimeMillis() / 1000) - 86400;
+
+            // pull/map rates
+            ArrayList<ExchangeRate> exchangeRates = getRates(symbol, startdate, enddate);
+
+            // persist rates to DB
+            if (exchangeRates != null) {
+                persistRates(exchangeRates);
+            }
         }
-        // start from last entry
-        else {
-            startdate = dataMapper.findLatestTimestampBySymbol(symbol);
-        }
 
-        // end timestamp: today - 1 day (864000) in epoch time
-        long enddate = (System.currentTimeMillis() / 1000) - 86400;
-
-        // get rates
-        return getRates(symbol, startdate, enddate);
+        logger.info("aggregation complete");
     }
 
     /**
@@ -62,11 +76,12 @@ public class AggregationService {
      * @param enddate epoch time
      * @return JSON Currency Exchange Rate Data
      */
-    private ArrayList<ExchangeRate> getRates(String symbol, long startdate, long enddate) throws KibotException, DatabaseException {
+    private ArrayList<ExchangeRate> getRates(String symbol, long startdate, long enddate) {
 
         // if the start and end are the same day, no data necessary
         if (enddate - startdate <= 86400) {
-            throw new KibotException(HttpStatus.OK, "data aggregation is current");
+            logger.info(symbol + " data is current");
+            return null;
         }
 
         // convert dates to Kibot formatting (MM/DD/YYYY)
@@ -95,16 +110,10 @@ public class AggregationService {
         // catch bad API call
         catch (HttpClientErrorException ex) {
             logger.error("bad external api request");
-            throw new KibotException(HttpStatus.BAD_REQUEST, "bad external api request");
         }
 
         // map response to ExchangeRate Objects
-        ArrayList<ExchangeRate> exchangeRates = mapRates(response, symbol);
-
-        // persist data to DB
-        persistRates(exchangeRates);
-
-        return exchangeRates;
+        return mapRates(response, symbol);
     }
 
     /**
@@ -113,7 +122,7 @@ public class AggregationService {
      * @param symbol of rates
      * @return an ArrayList of ExchangeRate Objects with the given data
      */
-    private ArrayList<ExchangeRate> mapRates(String rates, String symbol) throws KibotException {
+    private ArrayList<ExchangeRate> mapRates(String rates, String symbol) {
 
         ArrayList<ExchangeRate> output = new ArrayList<>();
 
@@ -136,7 +145,7 @@ public class AggregationService {
                     epoch = date.getTime() / 1000;
                 } catch (ParseException ex) {
                     logger.error("could not parse date");
-                    throw new KibotException(HttpStatus.BAD_REQUEST, "could not parse external date");
+                    return null;
                 }
 
                 // create new ExchangeRate Object
@@ -152,7 +161,7 @@ public class AggregationService {
 
         } catch (IOException ex) {
             logger.error("could not map response");
-            throw new KibotException(HttpStatus.BAD_REQUEST, "could not map external response");
+            return null;
         }
 
         return output;
@@ -169,12 +178,11 @@ public class AggregationService {
                 // check if already in DB
                 if (dataMapper.findRateBySymbolAndTimestamp(rate.getSymbol(), rate.getTimestamp()) == null) {
                     // persist to DB
-                    logger.info("persisted to database: " + rate.getSymbol() + " " + rate.getTimestamp());
                     dataMapper.insertRate(rate);
+                    logger.info(rate.getSymbol() + " data persisted for " + rate.getDate());
                 }
             } catch (Exception ex) {
-                logger.error("could not persist to database: " + rate.getSymbol() + " " + rate.getTimestamp());
-                throw new DatabaseException(HttpStatus.BAD_REQUEST, "could not persist to database");
+                logger.error("could not persist to database: " + rate.getSymbol() + " data for " + rate.getDate());
             }
         }
     }
