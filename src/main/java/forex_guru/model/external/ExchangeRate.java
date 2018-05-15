@@ -2,10 +2,20 @@ package forex_guru.model.external;
 
 public class ExchangeRate {
 
+    private int id;
     private String date;
     private long timestamp;
     private String symbol;
     private double close;
+
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public String getDate() {
         return date;

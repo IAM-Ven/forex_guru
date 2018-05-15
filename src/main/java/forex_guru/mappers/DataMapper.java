@@ -16,9 +16,8 @@ public interface DataMapper {
             "VALUES (#{date}, #{timestamp}, #{symbol}, #{close}); ")
     public boolean insertRate(ExchangeRate rate);
 
-
     @Select("SELECT * FROM `ForexGuru`.`rates` WHERE `symbol` = #{symbol} ")
-    public ArrayList<ExchangeRate> findRateBySymbol(String symbol);
+    public ExchangeRate[] findRatesBySymbol(String symbol);
 
     @Select("SELECT * FROM `ForexGuru`.`rates` WHERE `symbol` = \"${symbol}\" AND `timestamp` = \"${timestamp}\" LIMIT 1")
     public ExchangeRate findRateBySymbolAndTimestamp(@Param("symbol") String symbol, @Param("timestamp") long timestamp);

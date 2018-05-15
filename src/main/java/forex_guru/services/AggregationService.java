@@ -46,7 +46,7 @@ public class AggregationService {
             // retrieve start timestamp in epoch time
             long startdate;
             // if no data in DB, start with 01/01/2015
-            if (dataMapper.findRateBySymbol(symbol).size() == 0) {
+            if (dataMapper.findRatesBySymbol(symbol).length == 0) {
                 startdate = 1420070400;
             }
             // start from last entry

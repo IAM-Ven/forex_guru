@@ -13,24 +13,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Prediction and Data Aggregation Endpoints
+ * Prediction Endpoint
  */
 @RestController
 public class GuruController {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    @Autowired
-    AggregationService aggregationService;
-
-    /** CRON JOB ENDPOINT
-     * Aggregates all available data up to yesterday for the given symbol
-     * @return JSON Currency Exchange Data
+    /**
+     * Gives future currency exchange predictions
+     * @return prediction data
      */
     @GetMapping("/aggregate")
-    public RootResponse aggregate(@RequestParam(value="symbol") String symbol) throws KibotException, DatabaseException {
-        logger.info("API Call: /aggregate");
-        return new RootResponse(HttpStatus.OK, "OK", aggregationService.aggregate(symbol));
+    public RootResponse predict() {
+        logger.info("API Call: /predict");
+        return new RootResponse(HttpStatus.OK, "OK", null);
     }
 
 }
