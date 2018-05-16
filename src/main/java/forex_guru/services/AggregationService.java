@@ -18,6 +18,11 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -43,14 +48,11 @@ public class AggregationService {
         // iterate through all symbols being tracked be prediction service
         for (String symbol : PredictionService.TRACKING) {
 
-            // retrieve start timestamp in epoch time
-            long startdate;
-            // if no data in DB, start with 01/01/2015
-            if (dataMapper.findRatesBySymbol(symbol).length == 0) {
-                startdate = 1420070400;
-            }
-            // start from last entry
-            else {
+            // default start date is 01/01/2015
+            long startdate = 1420070400;
+
+            // if there is data, start from last entry
+            if (dataMapper.findRatesBySymbol(symbol).length != 0) {
                 startdate = dataMapper.findLatestTimestampBySymbol(symbol);
             }
 
@@ -130,23 +132,16 @@ public class AggregationService {
         try (BufferedReader reader = new BufferedReader(new StringReader(rates))) {
             String line;
 
+            DateTimeFormatter df = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+
             // read lines
             while ((line = reader.readLine()) != null) {
 
                 String[] data = line.split(",");
 
                 // parse timestamp
-
-                long epoch;
-
-                try {
-                    SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");
-                    Date date = df.parse(data[0]);
-                    epoch = date.getTime() / 1000;
-                } catch (ParseException ex) {
-                    logger.error("could not parse date");
-                    return null;
-                }
+                LocalDate local = LocalDate.parse(data[0], df);
+                long epoch =local.atStartOfDay(ZoneId.of("GMT")).toInstant().getEpochSecond();
 
                 // create new ExchangeRate Object
                 ExchangeRate rate = new ExchangeRate();
