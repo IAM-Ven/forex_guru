@@ -28,7 +28,7 @@ credentials for an access token.
 You can register client credentials by making a POST request to the Authorization Server with the
 client_id and client_secret of your choosing.
 ```
-curl -X POST -H 'Content-Type: application/json' -d '{"client_id": "guru", "client_secret": "secret", "scope": "read,write", "authorized_grant_types":"client_credentials"}' http://localhost:8080/client
+curl -X POST -H 'Content-Type: application/json' -d '{"client_id": "guru", "client_secret": "secret", "scope": "read,write", "authorized_grant_types":"client_credentials"}' http://localhost:8080/oauth/client
 ```
 
 In order to obtain an access token you should make a POST request to the Authorization Server with your client credentials.
@@ -41,6 +41,7 @@ This will return an access token that will expire after the allotted time has pa
 You can make a request to any endpoint using the access token in the authorization header.
 
 ```
-curl -X GET -H "Authorization: Bearer {access_token}" http://localhost:8080/prices
+curl -X GET -H "Authorization: Bearer {ACCESS_TOKEN}" http://localhost:8080/aggregate
+curl -X GET -H "Authorization: Bearer {ACCESS_TOKEN}" http://localhost:8080/predict
 ```
 

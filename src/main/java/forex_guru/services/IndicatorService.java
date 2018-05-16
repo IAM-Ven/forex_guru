@@ -7,18 +7,20 @@ import forex_guru.model.internal.Indicator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.Bar;
 import org.ta4j.core.BaseBar;
 import org.ta4j.core.BaseTimeSeries;
 import org.ta4j.core.TimeSeries;
+import org.ta4j.core.indicators.EMAIndicator;
 import org.ta4j.core.indicators.SMAIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 
 @Service
 
@@ -33,9 +35,9 @@ public class IndicatorService {
     IndicatorMapper indicatorMapper;
 
     /**
-     * Calculates indicators and stores them in DB
+     * Calculates indicators
      */
-    public void indicators() {
+    public ArrayList<Indicator> indicators() {
 
         // creates a timeseries to calculate indicators on
         TimeSeries series = buildTimeSeries("USDEUR");
@@ -44,17 +46,27 @@ public class IndicatorService {
         // calculates 30 tick simple moving average
         SMAIndicator sma = new SMAIndicator(close, 30);
 
-        // display results
+        // calculates 30 tick exponential moving average
+        EMAIndicator ema = new EMAIndicator(close, 30);
+
+        // build ArrayList of Indicator
+        ArrayList<Indicator> indicators = new ArrayList<>();
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+
         for (int i = 0; i < series.getBarCount(); i++) {
 
-            System.out.print("Time: " + series.getBar(i).getEndTime());
-            System.out.print("Close Price: " + series.getBar(i).getClosePrice());
-            System.out.print("Simple Moving Average: " + sma.getValue(i));
-            System.out.println("\n");
+            Indicator indicator = new Indicator();
+            indicator.setDate(series.getBar(i).getEndTime().format(df));
+            indicator.setSymbol(series.getName());
+            indicator.setClose(series.getBar(i).getClosePrice().doubleValue());
+            indicator.setSimpleMovingAverage(sma.getValue(i).doubleValue());
+            indicator.setExponentialMovingAverage(ema.getValue(i).doubleValue());
+            indicators.add(indicator);
+
         }
 
-
         logger.info("indicators calculated");
+        return indicators;
     }
 
     /**

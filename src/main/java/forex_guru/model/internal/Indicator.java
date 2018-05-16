@@ -2,49 +2,49 @@ package forex_guru.model.internal;
 
 public class Indicator {
 
-    private int id;
-    private int rate_id;
-    private long timestamp;
-    private String type;
-    private double value;
+    private String date;
+    private String symbol;
+    private double close;
+    private double simpleMovingAverage;
+    private double exponentialMovingAverage;
 
-    public int getId() {
-        return id;
+    public String getDate() {
+        return date;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public void setDate(String date) {
+        this.date = date;
     }
 
-    public long getTimestamp() {
-        return timestamp;
+    public String getSymbol() {
+        return symbol;
     }
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
+    public void setSymbol(String symbol) {
+        this.symbol = symbol;
     }
 
-    public int getRate_id() {
-        return rate_id;
+    public double getClose() {
+        return close;
     }
 
-    public void setRate_id(int rate_id) {
-        this.rate_id = rate_id;
+    public void setClose(double close) {
+        this.close = close;
     }
 
-    public String getType() {
-        return type;
+    public double getSimpleMovingAverage() {
+        return simpleMovingAverage;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setSimpleMovingAverage(double simpleMovingAverage) {
+        this.simpleMovingAverage = simpleMovingAverage;
     }
 
-    public double getValue() {
-        return value;
+    public double getExponentialMovingAverage() {
+        return exponentialMovingAverage;
     }
 
-    public void setValue(double value) {
-        this.value = value;
+    public void setExponentialMovingAverage(double exponentialMovingAverage) {
+        this.exponentialMovingAverage = exponentialMovingAverage;
     }
 }
