@@ -9,6 +9,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.ta4j.core.Bar;
+import org.ta4j.core.BaseBar;
+import org.ta4j.core.BaseTimeSeries;
+import org.ta4j.core.TimeSeries;
+import org.ta4j.core.indicators.SMAIndicator;
+import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
+
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 @Service
 
@@ -25,71 +35,54 @@ public class IndicatorService {
     /**
      * Calculates indicators and stores them in DB
      */
-    @Scheduled(cron="*/10 * * * * *") // TESTING ONLY
-    //@Scheduled(cron="30 0 6,19 * * *")
     public void indicators() {
 
-        simpleMovingAverage();
+        // creates a timeseries to calculate indicators on
+        TimeSeries series = buildTimeSeries("USDEUR");
+        ClosePriceIndicator close = new ClosePriceIndicator(series);
+
+        // calculates 30 tick simple moving average
+        SMAIndicator sma = new SMAIndicator(close, 30);
+
+        // display results
+        for (int i = 0; i < series.getBarCount(); i++) {
+
+            System.out.print("Time: " + series.getBar(i).getEndTime());
+            System.out.print("Close Price: " + series.getBar(i).getClosePrice());
+            System.out.print("Simple Moving Average: " + sma.getValue(i));
+            System.out.println("\n");
+        }
+
 
         logger.info("indicators calculated");
     }
 
     /**
-     * Calculates a 30 Day Simple Moving Average for each currency pair
-     * Stores resulting calculation in `indicator` table
+     * Builds a TimeSeries for TA4J
      */
-    public void simpleMovingAverage() {
+    private TimeSeries buildTimeSeries(String symbol) {
 
-        // iterate through all symbols being tracked be prediction service
-        for (String symbol : PredictionService.TRACKING) {
+        TimeSeries series = new BaseTimeSeries(symbol);
 
-            // pull rates from DB
-            ExchangeRate[] rates = dataMapper.findRatesBySymbol(symbol);
+        // pull all rate records for symbol from DB
+        ExchangeRate[] rates = dataMapper.findRatesBySymbol(symbol);
 
-            // iterate through each rate datapoint that has at least 30 trailing datapoints
-            for (int i = rates.length - 1; i > 30; i--) {
+        // iterate through rate records
+        for (int i = 0; i < rates.length; i++) {
 
-                // check if not already in DB
-                if (indicatorMapper.findIndicatorByRateIdTimeStampType(rates[i].getId(), rates[i].getTimestamp(), "SMA") == null) {
+            // get close date
+            long timestamp = rates[i].getTimestamp();
+            Instant date = Instant.ofEpochSecond(timestamp);
+            ZonedDateTime closeDate = ZonedDateTime.ofInstant(date, ZoneOffset.UTC);
 
-                    // calculate simple moving average
-                    Indicator indicator = calculateSMA(rates, i);
+            // create a bar for rate data (CloseDate, Open, High, Low, Close, Volume)
+            Bar bar = new BaseBar(closeDate,(double)0, (double)0, (double)0, rates[i].getClose(),0);
 
-                    // persist to DB
-                    indicatorMapper.insertIndicator(indicator);
-                }
-            }
-
-        }
-    }
-
-    /** HELPER METHOD
-     * Calculates the Simple Moving Average of a given Exchange Rate datapoint
-     * Simple Moving Average = Sum of Last 30 Closing Rates / 30 Days
-     *
-     * @param rates Array of ExchangeRates
-     * @param i position of current ExchangeRate in Array
-     * @return Indicator with the Simple Moving Average
-     */
-    private Indicator calculateSMA(ExchangeRate[] rates, int i) {
-        double sum = 0;
-
-        // calculate trailing sum
-        for (int j = i; j > i - 30; j--) {
-            sum += rates[j].getClose();
+            // add bar to series
+            series.addBar(bar);
         }
 
-        // calculate current moving average
-        double avg = sum / 30;
-
-        // map to indicator
-        Indicator indicator = new Indicator();
-        indicator.setTimestamp(rates[i].getTimestamp());
-        indicator.setRate_id(rates[i].getId());
-        indicator.setType("SMA");
-        indicator.setValue(avg);
-
-        return indicator;
+        return series;
     }
 
 }
