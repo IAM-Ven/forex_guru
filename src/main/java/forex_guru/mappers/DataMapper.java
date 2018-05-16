@@ -12,8 +12,8 @@ import java.util.ArrayList;
 public interface DataMapper {
 
     @Insert("INSERT INTO `ForexGuru`.`rates` " +
-            "(`date`, `timestamp`, `symbol`, `close`) " +
-            "VALUES (#{date}, #{timestamp}, #{symbol}, #{close}); ")
+            "(`date`, `timestamp`, `symbol`, `open`, `high`, `low`, `close`, `volume`) " +
+            "VALUES (#{date}, #{timestamp}, #{symbol}, #{open}, #{high}, #{low}, #{close}, #{volume}); ")
     public boolean insertRate(ExchangeRate rate);
 
     @Select("SELECT * FROM `ForexGuru`.`rates` WHERE `symbol` = #{symbol} ")

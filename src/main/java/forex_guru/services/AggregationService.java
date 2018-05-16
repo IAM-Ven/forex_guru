@@ -16,12 +16,9 @@ import org.springframework.web.client.RestTemplate;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
@@ -41,8 +38,7 @@ public class AggregationService {
      * Aggregates data from 01/01/2015 to most recent market close, twice daily
      * The data is stored in the 'rates' DB table
      */
-    @Scheduled(cron="*/5 * * * * *") // TESTING ONLY
-    //@Scheduled(cron="0 0 6,19 * * *")
+    @Scheduled(cron="0 0 6,19 * * *")
     public void aggregate() throws KibotException, DatabaseException {
 
         // iterate through all symbols being tracked be prediction service
@@ -148,7 +144,11 @@ public class AggregationService {
                 rate.setDate(data[0]);
                 rate.setTimestamp(epoch);
                 rate.setSymbol(symbol);
+                rate.setOpen(Double.parseDouble(data[1]));
+                rate.setHigh(Double.parseDouble(data[2]));
+                rate.setLow(Double.parseDouble(data[3]));
                 rate.setClose(Double.parseDouble(data[4]));
+                rate.setVolume(Long.parseLong(data[5]));
 
                 // add to results
                 output.add(rate);
@@ -163,8 +163,7 @@ public class AggregationService {
     }
 
     /**
-     * Persists KibotRates to DB
-     * @param rates to persist
+     * Persists rates to `ForexGuru`.`rates`
      */
     private void persistRates(ArrayList<ExchangeRate> rates) throws DatabaseException {
         // iterate through rates

@@ -24,6 +24,9 @@ public class GuruController {
     @Autowired
     IndicatorService indicatorService;
 
+    @Autowired
+    AggregationService aggregationService;
+
     /**
      * Gives technical indicators for USDEUR
      * @return
@@ -38,11 +41,21 @@ public class GuruController {
      * Gives future currency exchange predictions for USDEUR
      * @return prediction data
      */
-    @GetMapping("/predict")
+    @GetMapping("/predictions")
     public RootResponse predict() {
-        logger.info("API Call: /predict");
+        logger.info("API Call: /predictions");
         // TODO
         return new RootResponse(HttpStatus.OK, "OK", null);
+    }
+
+    /**
+     * Aggregates historical currency data
+     */
+    @GetMapping("/aggregate")
+    public RootResponse aggregate() throws KibotException, DatabaseException {
+        logger.info("API Call: /aggregate");
+        aggregationService.aggregate();
+        return new RootResponse(HttpStatus.OK, "OK", "data current");
     }
 
 }
