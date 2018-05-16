@@ -10,10 +10,11 @@ import org.apache.ibatis.annotations.Select;
 public interface IndicatorMapper {
 
     @Insert("INSERT INTO `ForexGuru`.`indicators` " +
-            "(`timestamp`, `rate_id`, `type`, `value`) " +
-            "VALUES (#{timestamp}, #{rate_id}, #{type}, #{value}); ")
+            "(`date`, `symbol`, `close`, `change`, `simpleMovingAverage`, `exponentialMovingAverage`) " +
+            "VALUES (#{date}, #{symbol}, #{close}, #{change}, #{simpleMovingAverage}, #{exponentialMovingAverage});")
     public boolean insertIndicator(Indicator indicator);
 
-    @Select("SELECT * FROM `ForexGuru`.`indicators` WHERE `rate_id` = \"${rate_id}\" AND `timestamp` = \"${timestamp}\" AND `type` = \"${type}\" LIMIT 1")
-    public Indicator findIndicatorByRateIdTimeStampType(@Param("rate_id") int rate_id, @Param("timestamp") long timestamp, @Param("type") String type);
+    @Select("SELECT * FROM `ForexGuru`.`indicators` WHERE `symbol` = \"${symbol}\" AND `date` = \"${date}\" LIMIT 1")
+    public Indicator findIndicatorBySymbolAndDate(@Param("symbol") String symbol, @Param("date") String date);
+
 }

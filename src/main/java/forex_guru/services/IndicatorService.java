@@ -53,12 +53,15 @@ public class IndicatorService {
         ArrayList<Indicator> indicators = new ArrayList<>();
         DateTimeFormatter df = DateTimeFormatter.ofPattern("MM/dd/yyyy");
 
-        for (int i = 0; i < series.getBarCount(); i++) {
+        // skip first 30 (not enough trailing data)
+        for (int i = 30; i < series.getBarCount(); i++) {
 
             Indicator indicator = new Indicator();
             indicator.setDate(series.getBar(i).getEndTime().format(df));
             indicator.setSymbol(series.getName());
             indicator.setClose(series.getBar(i).getClosePrice().doubleValue());
+            indicator.setChange(series.getBar(i).getClosePrice().doubleValue()
+                              - series.getBar(i - 1).getClosePrice().doubleValue());
             indicator.setSimpleMovingAverage(sma.getValue(i).doubleValue());
             indicator.setExponentialMovingAverage(ema.getValue(i).doubleValue());
             indicators.add(indicator);
@@ -66,6 +69,10 @@ public class IndicatorService {
         }
 
         logger.info("indicators calculated");
+
+        // store in DB
+        persistIndicators(indicators);
+
         return indicators;
     }
 
@@ -95,6 +102,26 @@ public class IndicatorService {
         }
 
         return series;
+    }
+
+    /**
+     * Persists Indictors in `ForexGuru`.`indicators`
+     * @param indicators
+     */
+    public void persistIndicators(ArrayList<Indicator> indicators) {
+        // iterate through rates
+        for (Indicator indicator : indicators) {
+            try {
+                // check if already in DB
+                if (indicatorMapper.findIndicatorBySymbolAndDate(indicator.getSymbol(), indicator.getDate()) == null) {
+                    // persist to DB
+                    indicatorMapper.insertIndicator(indicator);
+                    logger.info(indicator.getSymbol() + " data persisted for " + indicator.getDate());
+                }
+            } catch (Exception ex) {
+                logger.error("could not persist to database: " + indicator.getSymbol() + " data for " + indicator.getDate());
+            }
+        }
     }
 
 }

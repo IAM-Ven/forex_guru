@@ -5,8 +5,10 @@ public class Indicator {
     private String date;
     private String symbol;
     private double close;
+    private double change;
     private double simpleMovingAverage;
     private double exponentialMovingAverage;
+
 
     public String getDate() {
         return date;
@@ -30,6 +32,14 @@ public class Indicator {
 
     public void setClose(double close) {
         this.close = close;
+    }
+
+    public double getChange() {
+        return change;
+    }
+
+    public void setChange(double change) {
+        this.change = change;
     }
 
     public double getSimpleMovingAverage() {
