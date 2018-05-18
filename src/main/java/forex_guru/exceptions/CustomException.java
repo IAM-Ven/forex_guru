@@ -2,12 +2,12 @@ package forex_guru.exceptions;
 
 import org.springframework.http.HttpStatus;
 
-public class ClientException extends Exception {
+public class CustomException extends Exception {
 
     private String message;
     private HttpStatus status;
 
-    public ClientException(String message, HttpStatus status) {
+    public CustomException(HttpStatus status, String message) {
         this.message = message;
         this.status = status;
     }

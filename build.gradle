@@ -32,8 +32,6 @@ dependencies {
     compile(group: 'org.springframework.security.oauth', name: 'spring-security-oauth2', version: '2.3.1.RELEASE')
     compile(group: 'com.amazonaws', name: 'aws-java-sdk', version: '1.11.312')
 
-    compile("org.springframework.data:spring-data-gemfire")
-
     compile("org.mybatis.spring.boot:mybatis-spring-boot-starter:1.3.2")
     compile('mysql:mysql-connector-java')
     compile(group: 'org.ta4j', name: 'ta4j-core', version: '0.11')

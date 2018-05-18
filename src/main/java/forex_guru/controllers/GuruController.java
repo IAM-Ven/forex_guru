@@ -1,5 +1,6 @@
 package forex_guru.controllers;
 
+import forex_guru.exceptions.CustomException;
 import forex_guru.model.RootResponse;
 import forex_guru.services.IndicatorService;
 import org.slf4j.Logger;
@@ -19,18 +20,24 @@ public class GuruController {
     IndicatorService indicatorService;
 
     /**
-     * Calculates Technical Indicator
+     * Calculates daily technical indicator
      * @param type the indicator ("SMA" for Simple Moving Average, "EMA" for Exponential Moving Average)
      * @param symbol the currency pair ("USDEUR", "USDGBP")
-     * @param count the number of trailing days
+     * @param trailing the number of trailing days
      * @return the calculated Decimal value
      */
     @GetMapping("/dailyindicator")
     public RootResponse indicator(@RequestParam(value="type") String type,
                                   @RequestParam(value="symbol") String symbol,
-                                  @RequestParam(value="count") int count) {
-        logger.info("API Call: /indicators?type=" + type + "&symbol=" + symbol + "&count=" + count);
-        return new RootResponse(HttpStatus.OK, "OK", indicatorService.calculateDailyIndicators(type, symbol, count));
+                                  @RequestParam(value="trailing") int trailing) throws CustomException {
+
+        // ensure proper trailing input
+        if (trailing <= 0 || trailing > 250) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, "trailing days must be between 1 and 250");
+        }
+
+        logger.info("API Call: /indicators?type=" + type + "&symbol=" + symbol + "&trailing=" + trailing);
+        return new RootResponse(HttpStatus.OK, "OK", indicatorService.calculateDailyIndicators(type, symbol, trailing));
     }
 
 }
