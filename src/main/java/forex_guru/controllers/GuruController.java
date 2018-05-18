@@ -1,7 +1,6 @@
 package forex_guru.controllers;
 
-import forex_guru.model.internal.RootResponse;
-import forex_guru.services.HistoricalDataService;
+import forex_guru.model.RootResponse;
 import forex_guru.services.IndicatorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,13 +19,18 @@ public class GuruController {
     IndicatorService indicatorService;
 
     /**
-     * Gives technical indicators for given currency pair
-     * @return
+     * Calculates Technical Indicator
+     * @param type the indicator ("SMA" for Simple Moving Average, "EMA" for Exponential Moving Average)
+     * @param symbol the currency pair ("USDEUR", "USDGBP")
+     * @param count the number of trailing days
+     * @return the calculated Decimal value
      */
-    @GetMapping("/indicators")
-    public RootResponse indicate(@RequestParam(value="symbol") String symbol) {
-        logger.info("API Call: /indicators?symbol=" + symbol);
-        return new RootResponse(HttpStatus.OK, "OK", indicatorService.indicators(symbol));
+    @GetMapping("/dailyindicator")
+    public RootResponse indicator(@RequestParam(value="type") String type,
+                                  @RequestParam(value="symbol") String symbol,
+                                  @RequestParam(value="count") int count) {
+        logger.info("API Call: /indicators?type=" + type + "&symbol=" + symbol + "&count=" + count);
+        return new RootResponse(HttpStatus.OK, "OK", indicatorService.calculateDailyIndicators(type, symbol, count));
     }
 
 }

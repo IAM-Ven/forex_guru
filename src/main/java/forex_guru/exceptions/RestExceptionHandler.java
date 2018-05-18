@@ -1,6 +1,6 @@
 package forex_guru.exceptions;
 
-import forex_guru.model.internal.RootResponse;
+import forex_guru.model.RootResponse;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;

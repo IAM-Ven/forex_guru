@@ -1,6 +1,5 @@
 package forex_guru.services;
 
-import forex_guru.model.external.ExchangeRate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,15 +7,14 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.ta4j.core.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Date;
 
 @Service
@@ -28,15 +26,15 @@ public class HistoricalDataService {
     RestTemplate restTemplate;
 
     /**
-     * Pulls daily exchange rates for the last 90 business days
+     * Gets a daily TimeSeries for the last 365 business days
      * @param symbol the currency pair
-     * @return a list of exchange rate data
+     * @return a TimeSeries containing all available daily data from Kibot API
      */
-    public ArrayList<ExchangeRate> getRates(String symbol) {
+    public TimeSeries getDailySeries(String symbol) {
 
-        // range for last 90 days
+        // range for last 365 days
         long enddate = System.currentTimeMillis() / 1000;
-        long startdate = enddate - 7776000;
+        long startdate = enddate - 31536000;
 
         // convert dates to Kibot formatting (MM/DD/YYYY)
         SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");
@@ -67,18 +65,18 @@ public class HistoricalDataService {
         }
 
         // map response to ExchangeRate Objects
-        return mapRates(response, symbol);
+        return buildTimeSeries(response, symbol);
     }
 
     /**
-     * Maps String response data to ExchangeRate Objects
-     * @param rates to map
-     * @param symbol of rates
-     * @return an ArrayList of ExchangeRate Objects with the given data
+     * Maps String response data to a TimeSeries containing Bars
+     * @param rates the Kibot Response
+     * @param symbol the currency pair
+     * @return a TimeSeries of the given data
      */
-    private ArrayList<ExchangeRate> mapRates(String rates, String symbol) {
+    private TimeSeries buildTimeSeries(String rates, String symbol) {
 
-        ArrayList<ExchangeRate> output = new ArrayList<>();
+        TimeSeries series = new BaseTimeSeries(symbol);
 
         // read response
         try (BufferedReader reader = new BufferedReader(new StringReader(rates))) {
@@ -93,21 +91,22 @@ public class HistoricalDataService {
 
                 // parse timestamp
                 LocalDate local = LocalDate.parse(data[0], df);
-                long epoch =local.atStartOfDay(ZoneId.of("GMT")).toInstant().getEpochSecond();
+                long epoch = local.atStartOfDay(ZoneId.of("GMT")).toInstant().getEpochSecond();
+                Instant temp = Instant.ofEpochSecond(epoch);
+                ZonedDateTime date = ZonedDateTime.ofInstant(temp, ZoneOffset.UTC);
 
-                // populate ExchangeRate Object
-                ExchangeRate rate = new ExchangeRate();
-                rate.setDate(data[0]);
-                rate.setTimestamp(epoch);
-                rate.setSymbol(symbol);
-                rate.setOpen(Double.parseDouble(data[1]));
-                rate.setHigh(Double.parseDouble(data[2]));
-                rate.setLow(Double.parseDouble(data[3]));
-                rate.setClose(Double.parseDouble(data[4]));
-                rate.setVolume(Long.parseLong(data[5]));
+                // populate Bar Object
+                Decimal open = Decimal.valueOf(data[1]);
+                Decimal high = Decimal.valueOf(data[2]);
+                Decimal low = Decimal.valueOf(data[3]);
+                Decimal close = Decimal.valueOf(data[4]);
+                Decimal volume = Decimal.valueOf(data[5]);
 
-                // add to results
-                output.add(rate);
+                // create a bar for rate data (date, open, high, low, close, volume)
+                Bar bar = new BaseBar(date, open, high, low, close, volume);
+
+                // add bar to series
+                series.addBar(bar);
             }
 
         } catch (IOException ex) {
@@ -115,7 +114,7 @@ public class HistoricalDataService {
             return null;
         }
 
-        return output;
+        return series;
     }
 
 }

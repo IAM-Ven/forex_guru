@@ -2,7 +2,7 @@ package forex_guru.controllers;
 
 import forex_guru.exceptions.ClientException;
 import forex_guru.mappers.SecurityMapper;
-import forex_guru.model.internal.RootResponse;
+import forex_guru.model.RootResponse;
 import forex_guru.model.security.OAuth2Client;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

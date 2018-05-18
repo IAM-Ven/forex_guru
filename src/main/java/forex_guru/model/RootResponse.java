@@ -1,4 +1,4 @@
-package forex_guru.model.internal;
+package forex_guru.model;
 
 import org.springframework.http.HttpStatus;
 
