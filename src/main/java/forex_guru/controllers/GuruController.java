@@ -1,9 +1,7 @@
 package forex_guru.controllers;
 
-import forex_guru.exceptions.DatabaseException;
-import forex_guru.exceptions.KibotException;
 import forex_guru.model.internal.RootResponse;
-import forex_guru.services.AggregationService;
+import forex_guru.services.HistoricalDataService;
 import forex_guru.services.IndicatorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,9 +11,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Prediction Endpoint
- */
 @RestController
 public class GuruController {
 
@@ -24,27 +19,14 @@ public class GuruController {
     @Autowired
     IndicatorService indicatorService;
 
-    @Autowired
-    AggregationService aggregationService;
-
     /**
-     * Gives technical indicators for USDEUR
+     * Gives technical indicators for given currency pair
      * @return
      */
     @GetMapping("/indicators")
-    public RootResponse indicate() {
-        logger.info("API Call: /indicators");
-        return new RootResponse(HttpStatus.OK, "OK", indicatorService.indicators());
-    }
-
-    /**
-     * Aggregates historical currency data
-     */
-    @GetMapping("/aggregate")
-    public RootResponse aggregate() throws KibotException, DatabaseException {
-        logger.info("API Call: /aggregate");
-        aggregationService.aggregate();
-        return new RootResponse(HttpStatus.OK, "OK", "data current");
+    public RootResponse indicate(@RequestParam(value="symbol") String symbol) {
+        logger.info("API Call: /indicators?symbol=" + symbol);
+        return new RootResponse(HttpStatus.OK, "OK", indicatorService.indicators(symbol));
     }
 
 }

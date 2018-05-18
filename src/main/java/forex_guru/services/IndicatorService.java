@@ -1,6 +1,5 @@
 package forex_guru.services;
 
-import forex_guru.mappers.DataMapper;
 import forex_guru.mappers.IndicatorMapper;
 import forex_guru.model.external.ExchangeRate;
 import forex_guru.model.internal.Indicator;
@@ -23,24 +22,25 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 @Service
-
 public class IndicatorService {
 
     Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    DataMapper dataMapper;
+    HistoricalDataService historicalDataService;
 
     @Autowired
     IndicatorMapper indicatorMapper;
 
     /**
-     * Calculates indicators
+     * Calculates technical indicators for last 60 business days
+     * @param symbol the currency pair to analyze
+     * @return a list of indicator data
      */
-    public ArrayList<Indicator> indicators() {
+    public ArrayList<Indicator> indicators(String symbol) {
 
         // creates a timeseries to calculate indicators on
-        TimeSeries series = buildTimeSeries("USDEUR");
+        TimeSeries series = buildTimeSeries(symbol);
         ClosePriceIndicator close = new ClosePriceIndicator(series);
 
         // calculates 30 tick simple moving average
@@ -68,7 +68,7 @@ public class IndicatorService {
 
         }
 
-        logger.info("indicators calculated");
+        logger.info("indicators calculated for " + symbol);
 
         // store in DB
         persistIndicators(indicators);
@@ -77,29 +77,30 @@ public class IndicatorService {
     }
 
     /**
-     * Builds a TimeSeries for TA4J
+     * Builds a TimeSeries for TA4J for the past 90 days
+     * @param symbol the currency pair
+     * @return a TimeSeries containing Bars
      */
     private TimeSeries buildTimeSeries(String symbol) {
 
         TimeSeries series = new BaseTimeSeries(symbol);
 
-        // pull all rate records for symbol from DB
-        ExchangeRate[] rates = dataMapper.findRatesBySymbol(symbol);
+        // get historical exchange rate data
+        ArrayList<ExchangeRate> rates = historicalDataService.getRates(symbol);
 
-        // iterate through rate records
-        for (int i = 0; i < rates.length; i++) {
+        for (ExchangeRate rate : rates) {
 
             // get close date
-            long timestamp = rates[i].getTimestamp();
-            Instant date = Instant.ofEpochSecond(timestamp);
-            ZonedDateTime closeDate = ZonedDateTime.ofInstant(date, ZoneOffset.UTC);
+            long timestamp = rate.getTimestamp();
+            Instant temp = Instant.ofEpochSecond(timestamp);
+            ZonedDateTime date = ZonedDateTime.ofInstant(temp, ZoneOffset.UTC);
 
-            // create a bar for rate data (CloseDate, Open, High, Low, Close, Volume)
-            Bar bar = new BaseBar(closeDate, rates[i].getOpen(), rates[i].getHigh(),
-                                  rates[i].getLow(), rates[i].getClose(), rates[i].getVolume());
+            // create a bar for rate data (date, open, high, low, close, volume)
+            Bar bar = new BaseBar(date, rate.getOpen(), rate.getHigh(), rate.getLow(), rate.getClose(), rate.getVolume());
 
             // add bar to series
             series.addBar(bar);
+
         }
 
         return series;
@@ -107,10 +108,10 @@ public class IndicatorService {
 
     /**
      * Persists Indictors in `ForexGuru`.`indicators`
-     * @param indicators
+     * @param indicators the list of indicators to persist
      */
     private void persistIndicators(ArrayList<Indicator> indicators) {
-        // iterate through rates
+
         for (Indicator indicator : indicators) {
             try {
                 // check if already in DB

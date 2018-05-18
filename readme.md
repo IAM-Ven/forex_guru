@@ -26,7 +26,6 @@ This will return an access token that will expire after the allotted time has pa
 You can make a request to any endpoint using the access token in the authorization header.
 
 ```
-curl -X GET -H "Authorization: Bearer {ACCESS_TOKEN}" http://localhost:8080/aggregate
 curl -X GET -H "Authorization: Bearer {ACCESS_TOKEN}" http://localhost:8080/indicators
 ```
 

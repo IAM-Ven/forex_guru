@@ -1,14 +1,10 @@
 package forex_guru.services;
 
-import forex_guru.exceptions.DatabaseException;
-import forex_guru.exceptions.KibotException;
-import forex_guru.mappers.DataMapper;
 import forex_guru.model.external.ExchangeRate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -24,65 +20,23 @@ import java.util.ArrayList;
 import java.util.Date;
 
 @Service
-public class AggregationService {
+public class HistoricalDataService {
 
     Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     RestTemplate restTemplate;
 
-    @Autowired
-    DataMapper dataMapper;
-
-    private final String[] TRACKING = {"USDEUR"};
-
     /**
-     * Aggregates data from 01/01/2015 to most recent market close, twice daily
-     * The data is stored in the 'rates' DB table
+     * Pulls daily exchange rates for the last 90 business days
+     * @param symbol the currency pair
+     * @return a list of exchange rate data
      */
-    @Scheduled(cron="0 0 6,19 * * *")
-    public void aggregate() throws KibotException, DatabaseException {
+    public ArrayList<ExchangeRate> getRates(String symbol) {
 
-        // iterate through all symbols being tracked
-        for (String symbol : TRACKING) {
-
-            // default start date is 01/01/2015
-            long startdate = 1420070400;
-
-            // if there is data, start from last entry
-            if (dataMapper.findRatesBySymbol(symbol).length != 0) {
-                startdate = dataMapper.findLatestTimestampBySymbol(symbol);
-            }
-
-            // end timestamp: today - 1 day (864000) in epoch time
-            long enddate = (System.currentTimeMillis() / 1000) - 86400;
-
-            // pull/map rates
-            ArrayList<ExchangeRate> exchangeRates = getRates(symbol, startdate, enddate);
-
-            // persist rates to DB
-            if (exchangeRates != null) {
-                persistRates(exchangeRates);
-            }
-        }
-
-        logger.info("aggregation complete");
-    }
-
-    /**
-     * Pulls daily exchange rates for the given symbol and date range
-     * @param symbol of forex (ex USDEUR)
-     * @param startdate epoch time
-     * @param enddate epoch time
-     * @return JSON Currency Exchange Rate Data
-     */
-    private ArrayList<ExchangeRate> getRates(String symbol, long startdate, long enddate) {
-
-        // if the start and end are the same day, no data necessary
-        if (enddate - startdate <= 86400) {
-            logger.info(symbol + " data is current");
-            return null;
-        }
+        // range for last 90 days
+        long enddate = System.currentTimeMillis() / 1000;
+        long startdate = enddate - 7776000;
 
         // convert dates to Kibot formatting (MM/DD/YYYY)
         SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");
@@ -141,7 +95,7 @@ public class AggregationService {
                 LocalDate local = LocalDate.parse(data[0], df);
                 long epoch =local.atStartOfDay(ZoneId.of("GMT")).toInstant().getEpochSecond();
 
-                // create new ExchangeRate Object
+                // populate ExchangeRate Object
                 ExchangeRate rate = new ExchangeRate();
                 rate.setDate(data[0]);
                 rate.setTimestamp(epoch);
@@ -162,25 +116,6 @@ public class AggregationService {
         }
 
         return output;
-    }
-
-    /**
-     * Persists rates to `ForexGuru`.`rates`
-     */
-    private void persistRates(ArrayList<ExchangeRate> rates) throws DatabaseException {
-        // iterate through rates
-        for (ExchangeRate rate : rates) {
-            try {
-                // check if already in DB
-                if (dataMapper.findRateBySymbolAndTimestamp(rate.getSymbol(), rate.getTimestamp()) == null) {
-                    // persist to DB
-                    dataMapper.insertRate(rate);
-                    logger.info(rate.getSymbol() + " data persisted for " + rate.getDate());
-                }
-            } catch (Exception ex) {
-                logger.error("could not persist to database: " + rate.getSymbol() + " data for " + rate.getDate());
-            }
-        }
     }
 
 }
