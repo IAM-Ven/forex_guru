@@ -34,6 +34,8 @@ public class AggregationService {
     @Autowired
     DataMapper dataMapper;
 
+    private final String[] TRACKING = {"USDEUR"};
+
     /**
      * Aggregates data from 01/01/2015 to most recent market close, twice daily
      * The data is stored in the 'rates' DB table
@@ -41,8 +43,8 @@ public class AggregationService {
     @Scheduled(cron="0 0 6,19 * * *")
     public void aggregate() throws KibotException, DatabaseException {
 
-        // iterate through all symbols being tracked be prediction service
-        for (String symbol : PredictionService.TRACKING) {
+        // iterate through all symbols being tracked
+        for (String symbol : TRACKING) {
 
             // default start date is 01/01/2015
             long startdate = 1420070400;

@@ -95,7 +95,8 @@ public class IndicatorService {
             ZonedDateTime closeDate = ZonedDateTime.ofInstant(date, ZoneOffset.UTC);
 
             // create a bar for rate data (CloseDate, Open, High, Low, Close, Volume)
-            Bar bar = new BaseBar(closeDate,(double)0, (double)0, (double)0, rates[i].getClose(),0);
+            Bar bar = new BaseBar(closeDate, rates[i].getOpen(), rates[i].getHigh(),
+                                  rates[i].getLow(), rates[i].getClose(), rates[i].getVolume());
 
             // add bar to series
             series.addBar(bar);
@@ -108,7 +109,7 @@ public class IndicatorService {
      * Persists Indictors in `ForexGuru`.`indicators`
      * @param indicators
      */
-    public void persistIndicators(ArrayList<Indicator> indicators) {
+    private void persistIndicators(ArrayList<Indicator> indicators) {
         // iterate through rates
         for (Indicator indicator : indicators) {
             try {

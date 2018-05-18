@@ -38,17 +38,6 @@ public class GuruController {
     }
 
     /**
-     * Gives future currency exchange predictions for USDEUR
-     * @return prediction data
-     */
-    @GetMapping("/predictions")
-    public RootResponse predict() {
-        logger.info("API Call: /predictions");
-        // TODO
-        return new RootResponse(HttpStatus.OK, "OK", null);
-    }
-
-    /**
      * Aggregates historical currency data
      */
     @GetMapping("/aggregate")

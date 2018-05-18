@@ -1,25 +1,10 @@
 # Forex Guru
-This is a project for experimenting with Forex, Spring Security (OAuth2), AWS Machine Learning, and 
+This is a project for experimenting with Forex, Spring Security (OAuth2), Technical Analysis (TA4J), and 
 AWS Simple Email Service.
 
 ## Deployment
 
-Create a table to hold OAuth2 Client Credentials using the following SQL statement. 
-```
-create table oauth_client_details (
-  client_id VARCHAR(256) PRIMARY KEY,
-  resource_ids VARCHAR(256),
-  client_secret VARCHAR(256),
-  scope VARCHAR(256),
-  authorized_grant_types VARCHAR(256),
-  web_server_redirect_uri VARCHAR(256),
-  authorities VARCHAR(256),
-  access_token_validity INTEGER,
-  refresh_token_validity INTEGER,
-  additional_information VARCHAR(4096),
-  autoapprove VARCHAR(256)
-);
-```
+Create a MySQL schema called `ForexGuru` using the SQL dump.
 
 ## Usage
 This API is secured with OAuth2. To access secure endpoints you need to exchange your client
@@ -42,6 +27,6 @@ You can make a request to any endpoint using the access token in the authorizati
 
 ```
 curl -X GET -H "Authorization: Bearer {ACCESS_TOKEN}" http://localhost:8080/aggregate
-curl -X GET -H "Authorization: Bearer {ACCESS_TOKEN}" http://localhost:8080/predict
+curl -X GET -H "Authorization: Bearer {ACCESS_TOKEN}" http://localhost:8080/indicators
 ```
 
