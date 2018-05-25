@@ -17,7 +17,7 @@ public class GuruController {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Autowired
-    IndicatorService indicatorService;
+    private IndicatorService indicatorService;
 
     /**
      * Calculates daily technical indicator
@@ -37,7 +37,7 @@ public class GuruController {
         }
 
         logger.info("API Call: /indicators?type=" + type + "&symbol=" + symbol + "&trailing=" + trailing);
-        return new RootResponse(HttpStatus.OK, "OK", indicatorService.calculateDailyIndicators(type, symbol, trailing));
+        return new RootResponse(HttpStatus.OK, "OK", indicatorService.calculateDailyIndicator(type, symbol, trailing));
     }
 
 }

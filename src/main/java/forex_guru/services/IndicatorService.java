@@ -25,10 +25,10 @@ import java.util.Date;
 @Service
 public class IndicatorService {
 
-    Logger logger = LoggerFactory.getLogger(this.getClass());
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    RestTemplate restTemplate;
+    private RestTemplate restTemplate;
 
     /**
      * Calculates Technical Indicators
@@ -37,7 +37,7 @@ public class IndicatorService {
      * @param trailing the number of trailing days
      * @return a pair with the indicator type and the calculated indicator as Decimal
      */
-    public Pair<String, Decimal> calculateDailyIndicators(String type, String symbol, int trailing) throws CustomException {
+    public Decimal calculateDailyIndicator(String type, String symbol, int trailing) throws CustomException {
 
         TimeSeries series = getDailySeries(symbol);
         ClosePriceIndicator last = new ClosePriceIndicator(series);
@@ -65,7 +65,7 @@ public class IndicatorService {
             throw new CustomException(HttpStatus.BAD_REQUEST, type + "is an invalid indicator type");
         }
 
-        return new Pair<>(type, indicator.getValue(series.getEndIndex()));
+        return indicator.getValue(series.getEndIndex());
     }
 
     /**

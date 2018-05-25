@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.*;
 public class SecurityController {
 
     @Autowired
-    SecurityMapper securityMapper;
+    private SecurityMapper securityMapper;
 
     @Autowired
-    PasswordEncoder passwordEncoder;
+    private PasswordEncoder passwordEncoder;
 
     /**
      * Creates a new client with the given client details
