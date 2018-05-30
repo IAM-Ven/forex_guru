@@ -1,6 +1,6 @@
 package forex_guru.mappers;
 
-import forex_guru.model.security.OAuth2Client;
+import forex_guru.model.OAuth2Client;
 import org.apache.ibatis.annotations.*;
 
 @Mapper

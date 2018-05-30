@@ -3,7 +3,7 @@ package forex_guru.controllers;
 import forex_guru.exceptions.CustomException;
 import forex_guru.mappers.SecurityMapper;
 import forex_guru.model.RootResponse;
-import forex_guru.model.security.OAuth2Client;
+import forex_guru.model.OAuth2Client;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;

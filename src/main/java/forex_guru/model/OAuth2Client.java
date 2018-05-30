@@ -1,4 +1,4 @@
-package forex_guru.model.security;
+package forex_guru.model;
 
 public class OAuth2Client {
 
