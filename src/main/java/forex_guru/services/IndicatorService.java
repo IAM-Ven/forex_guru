@@ -77,7 +77,7 @@ public class IndicatorService {
      * @param symbol the currency pair
      * @return a TimeSeries containing all available daily data from Kibot API
      */
-    private TimeSeries dailySeries(String symbol) throws CustomException {
+    public TimeSeries dailySeries(String symbol) throws CustomException {
 
         TimeSeries series = seriesMap.get(symbol);
 
