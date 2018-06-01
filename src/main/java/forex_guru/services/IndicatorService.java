@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -21,6 +22,7 @@ import java.text.SimpleDateFormat;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.HashMap;
 
 @Service
 public class IndicatorService {
@@ -29,6 +31,8 @@ public class IndicatorService {
 
     @Autowired
     private RestTemplate restTemplate;
+
+    HashMap<String, TimeSeries> seriesMap = new HashMap<>();
 
     /**
      * Calculates Technical Indicators
@@ -39,7 +43,7 @@ public class IndicatorService {
      */
     public Decimal calculateDailyIndicator(String type, String symbol, int trailing) throws CustomException {
 
-        TimeSeries series = getDailySeries(symbol);
+        TimeSeries series = dailySeries(symbol);
         ClosePriceIndicator last = new ClosePriceIndicator(series);
 
         // not enough data trailing data
@@ -73,7 +77,15 @@ public class IndicatorService {
      * @param symbol the currency pair
      * @return a TimeSeries containing all available daily data from Kibot API
      */
-    private TimeSeries getDailySeries(String symbol) throws CustomException {
+    private TimeSeries dailySeries(String symbol) throws CustomException {
+
+        TimeSeries series = seriesMap.get(symbol);
+
+        // series already exists
+        if (series != null) {
+            logger.info("retrieving stored result from HashMap at" + symbol);
+            return series;
+        }
 
         // range for last 365 days
         long enddate = System.currentTimeMillis() / 1000;
@@ -109,7 +121,13 @@ public class IndicatorService {
         }
 
         // map response to ExchangeRate Objects
-        return buildTimeSeries(response, symbol);
+        series = buildTimeSeries(response, symbol);
+
+        // store series in hashmap
+        logger.info("storing series in HashMap at " + symbol);
+        seriesMap.put(symbol, series);
+
+        return series;
     }
 
     /**
@@ -158,7 +176,16 @@ public class IndicatorService {
             throw new CustomException(HttpStatus.BAD_REQUEST, "could not parse response");
         }
 
+        logger.info("series built for " + symbol);
         return series;
     }
 
+    /**
+     * Clears Series HashMap Daily
+     */
+    @Scheduled(cron = "0 0 8 * * *")
+    private void clearSeriesMap() {
+        logger.info("clearing HashMap");
+        seriesMap = null;
+    }
 }
